@@ -1,0 +1,105 @@
+# The Librarian
+
+A vibe-based book discovery engine that delights readers by deconstructing books into their "DNA" to help find perfect recommendations.
+
+## Overview
+
+Most book recommendation engines rely on "Collaborative Filtering" (People who bought X also bought Y). This often recommends books that are too similar or fails to capture why a reader actually liked a book (e.g., they liked the "sparse, clinical prose," not the sci-fi setting).
+
+The Librarian solves this by being a **Vibe-Based Discovery Engine** that prioritizes "Pivoting" (freshness) over "Cloning" (repetition).
+
+## Target Users
+
+**The Inarticulate Searcher** — a reader who knows how they want to feel but lacks the literary vocabulary to describe it.
+
+## How It Works
+
+1. **Search** - Find a book you loved
+2. **Analyze** - The system extracts the book's "DNA" (setting, narrative engine, prose texture, emotional profile, structural quirks, themes)
+3. **Discover** - Get recommendations based on the specific elements that made you love the original book
+4. **Pivot** - Find books that share your favorite aspects but offer fresh experiences
+
+## Tech Stack
+
+- **Language**: Python
+- **Web Framework**: FastAPI
+- **Templating**: Jinja2 (server-rendered HTML)
+- **Agent Framework**: Strands
+- **APIs**: 
+  - Google Books API (book metadata)
+  - Exa.ai (web search for book analysis)
+  - Tavily (web search for candidate finding)
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.11+
+- Virtual environment
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/chienchern/librarian.git
+cd librarian
+```
+
+2. Create and activate virtual environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -e .
+```
+
+4. Set up environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+5. Run the server:
+```bash
+python -m uvicorn src.librarian.app:app --reload --host 0.0.0.0 --port 8000
+```
+
+6. Open your browser to `http://localhost:8000`
+
+## Project Structure
+
+```
+src/librarian/
+├── analysis/          # Book DNA analysis agents
+├── ranking/           # Candidate finding and ranking
+├── seed/              # Book search and metadata
+├── writing/           # Recommendation writing
+├── shared/            # Common utilities and models
+├── templates/         # HTML templates
+└── app.py            # FastAPI application
+```
+
+## API Endpoints
+
+- `GET /` - Home page with search
+- `GET /search` - Book search results
+- `GET /book/{book_id}/analyze` - Book DNA analysis page
+- `POST /api/books/{book_id}/find-candidates` - Find book candidates
+- `POST /api/books/{book_id}/rank-candidates` - Rank candidates
+- `POST /api/books/{book_id}/write-recommendations` - Generate recommendations
+
+## Contributing
+
+This project uses a systematic development approach:
+
+1. **Investigation** - Understand problems step by step
+2. **Planning** - Break complex changes into logical steps
+3. **Implementation** - Write minimal, focused code
+4. **Validation** - Ensure changes work as expected
+
+## License
+
+[Add your license here]
