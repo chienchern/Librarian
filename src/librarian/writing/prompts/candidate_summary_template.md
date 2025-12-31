@@ -1,0 +1,11 @@
+Rank {rank}: "{title}" by {author}
+- Confidence Score: {confidence_score}%
+- Technical Reasoning: {reasoning}
+- Genre: {genre}
+- Setting: {setting}
+- Narrative Engine: {narrative_engine}
+- Prose Texture: {prose_texture}
+- Emotional Profile: {emotional_profile}
+- Structural Quirks: {structural_quirks}
+- Theme: {theme}
+- Dealbreakers: {dealbreakers}

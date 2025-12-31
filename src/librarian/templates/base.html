@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}The Librarian{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        h1 { color: #ffffff; margin-bottom: 1rem; }
+        h1 a { 
+            color: #ffffff; 
+            text-decoration: none; 
+            cursor: pointer;
+        }
+        h1 a:hover { color: #4a9eff; }
+        .search-form { margin-bottom: 2rem; }
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+        .search-input:focus { outline: none; border-color: #4a9eff; }
+        .book-card {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 1rem;
+            border: 1px solid #333;
+        }
+        .book-card img {
+            width: 80px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .book-info { flex: 1; }
+        .book-title { font-size: 1.2rem; font-weight: 600; color: #ffffff; }
+        .book-author { color: #aaa; margin-bottom: 0.5rem; }
+        .book-blurb { font-size: 0.9rem; color: #ccc; }
+        .select-btn {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        .select-btn:hover { background: #357abd; }
+        
+        /* DNA Analysis Styles */
+        .book-summary {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #333;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        .book-summary img {
+            width: 100px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .book-summary-content {
+            flex: 1;
+        }
+        .book-summary h2 { margin: 0 0 0.5rem 0; color: #ffffff; }
+        .book-summary p { margin: 0; color: #aaa; }
+        
+        .dna-section h3 { color: #ffffff; margin-bottom: 1rem; }
+        .pillar-priority {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+        .selection-counter {
+            color: #4a9eff;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .dna-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .dna-tile {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dna-tile:hover:not(.disabled) { border-color: #4a9eff; }
+        .dna-tile.selected { 
+            border-color: #4a9eff; 
+            background: #1a3a5a;
+        }
+        .dna-tile.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .dna-tile.disabled:hover {
+            border-color: #444;
+        }
+        .dna-tile h4 { 
+            margin: 0 0 0.5rem 0; 
+            color: #ffffff; 
+            font-size: 1rem;
+        }
+        .pillar-summary {
+            background: #1a1a1a;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-bottom: 0.75rem;
+            color: #4a9eff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .pillar-full-text {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .dna-tile p { 
+            margin: 0; 
+            color: #ccc; 
+            font-size: 0.9rem;
+        }
+        
+        .setting-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .setting-item {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+        
+        .dealbreakers-section {
+            margin-bottom: 2rem;
+        }
+        .dealbreakers-section h4 { 
+            color: #ffffff; 
+            margin-bottom: 0.5rem;
+        }
+        .dealbreakers-section p { 
+            color: #aaa; 
+            margin-bottom: 1rem;
+        }
+        .dealbreakers-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .dealbreaker-tile {
+            background: #2a2a2a;
+            border: 2px solid #666;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        .dealbreaker-tile:hover { border-color: #ff6b6b; }
+        .dealbreaker-tile.selected { 
+            border-color: #ff6b6b; 
+            background: #5a1a1a;
+            color: #ffaaaa;
+        }
+        
+        /* Candidates Section Styles */
+        .candidates-section {
+            margin-bottom: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #444;
+        }
+        .candidates-section h4 {
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+        .candidates-section p {
+            color: #aaa;
+            margin-bottom: 1rem;
+        }
+        .candidates-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .candidate-card {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+        .candidate-card:hover {
+            border-color: #4a9eff;
+        }
+        .candidate-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+        .candidate-author {
+            color: #aaa;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+        .candidate-snippet {
+            color: #ccc;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            font-style: italic;
+        }
+        
+        /* Ranked Candidates Styles */
+        .ranked-candidate {
+            position: relative;
+        }
+        .clickable-candidate {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .clickable-candidate:hover {
+            border-color: #4a9eff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2);
+        }
+        .click-hint {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            background: rgba(74, 158, 255, 0.1);
+            color: #4a9eff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .clickable-candidate:hover .click-hint {
+            opacity: 1;
+        }
+        .candidate-rank {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #444;
+        }
+        .rank-badge {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4a9eff;
+        }
+        .confidence-score {
+            background: #1a4d3a;
+            color: #4ade80;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .candidate-reasoning {
+            color: #ccc;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-top: 0.5rem;
+        }
+        .analysis-note {
+            color: #aaa;
+            font-size: 0.8rem;
+            font-style: italic;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        /* Recommendations Section Styles */
+        .recommendations-section {
+            margin-bottom: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #444;
+        }
+        .recommendations-section h4 {
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+        .recommendations-section p {
+            color: #aaa;
+            margin-bottom: 1rem;
+        }
+        .recommendations-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .recommendation-card {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+            cursor: pointer;
+        }
+        .recommendation-card.enhanced-recommendation {
+            /* Additional styling for enhanced recommendations */
+        }
+        .recommendation-card.clickable-recommendation:hover {
+            border-color: #4a9eff !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2) !important;
+        }
+        .recommendation-header {
+            margin-bottom: 1rem;
+        }
+        .recommendation-rank {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #444;
+        }
+        .rank-badge {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4a9eff;
+        }
+        .confidence-score {
+            background: #1a4d3a;
+            color: #4ade80;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .recommendation-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+        .recommendation-author {
+            color: #aaa;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+        .recommendation-content {
+            margin-bottom: 1rem;
+        }
+        .why-it-matches, .what-is-fresh {
+            margin-bottom: 1rem;
+        }
+        .why-it-matches h5, .what-is-fresh h5 {
+            color: #4a9eff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .why-it-matches p, .what-is-fresh p {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin: 0;
+        }
+        .click-hint {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            background: rgba(74, 158, 255, 0.1);
+            color: #4a9eff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        .recommendation-card.clickable-recommendation:hover .click-hint {
+            opacity: 1 !important;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        .primary-btn {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .primary-btn:hover { background: #357abd; }
+        .secondary-btn {
+            background: transparent;
+            color: #aaa;
+            border: 2px solid #666;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .secondary-btn:hover { 
+            border-color: #aaa; 
+            color: #ffffff;
+        }
+        
+        .book-progress-container {
+            margin-top: 1rem;
+        }
+        
+        /* Progress Indicator Styles */
+        .progress-indicator {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+            display: none;
+        }
+        .progress-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #444;
+            border-top: 3px solid #4a9eff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+        .progress-text {
+            color: #ffffff;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .progress-subtext {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script>
+        // Progress indicator functions
+        function showProgress(text = "Processing...", subtext = "Please wait", containerId = null) {
+            // Create or update progress indicator
+            let progressDiv = document.getElementById('progress-indicator');
+            if (!progressDiv) {
+                progressDiv = document.createElement('div');
+                progressDiv.id = 'progress-indicator';
+                progressDiv.className = 'progress-indicator';
+                progressDiv.innerHTML = `
+                    <div class="progress-spinner"></div>
+                    <div id="progress-text" class="progress-text">Processing...</div>
+                    <div id="progress-subtext" class="progress-subtext">Please wait</div>
+                `;
+            }
+            
+            // Update text
+            progressDiv.querySelector('#progress-text').textContent = text;
+            progressDiv.querySelector('#progress-subtext').textContent = subtext;
+            
+            // Insert into specified container or after search form
+            if (containerId) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.appendChild(progressDiv);
+                }
+            } else {
+                // Default: insert after search form or at top of container
+                const searchForm = document.querySelector('.search-form');
+                const container = document.querySelector('.container');
+                if (searchForm) {
+                    searchForm.parentNode.insertBefore(progressDiv, searchForm.nextSibling);
+                } else if (container) {
+                    container.insertBefore(progressDiv, container.firstChild);
+                }
+            }
+            
+            progressDiv.style.display = 'block';
+        }
+        
+        function hideProgress() {
+            const progressDiv = document.getElementById('progress-indicator');
+            if (progressDiv) {
+                progressDiv.style.display = 'none';
+                // Clear any running timer
+                if (window.progressTimer) {
+                    clearInterval(window.progressTimer);
+                    window.progressTimer = null;
+                }
+            }
+        }
+        
+        function updateProgressMessage(text, subtext) {
+            const progressDiv = document.getElementById('progress-indicator');
+            if (progressDiv) {
+                const textElement = progressDiv.querySelector('#progress-text');
+                const subtextElement = progressDiv.querySelector('#progress-subtext');
+                if (textElement) textElement.textContent = text;
+                if (subtextElement) subtextElement.textContent = subtext;
+            }
+        }
+        
+        function showProgressWithTimer(text = "Processing...", subtext = "Please wait", containerId = null) {
+            // Create or update progress indicator with timer
+            let progressDiv = document.getElementById('progress-indicator');
+            if (!progressDiv) {
+                progressDiv = document.createElement('div');
+                progressDiv.id = 'progress-indicator';
+                progressDiv.className = 'progress-indicator';
+                progressDiv.innerHTML = `
+                    <div class="progress-spinner"></div>
+                    <div id="progress-text" class="progress-text">Processing...</div>
+                    <div id="progress-subtext" class="progress-subtext">Please wait</div>
+                    <div id="progress-timer" class="progress-subtext" style="margin-top: 0.5rem; font-weight: bold;">Elapsed: 0s</div>
+                `;
+            }
+            
+            // Update text
+            progressDiv.querySelector('#progress-text').textContent = text;
+            progressDiv.querySelector('#progress-subtext').textContent = subtext;
+            
+            // Insert into specified container or after search form
+            if (containerId) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.appendChild(progressDiv);
+                }
+            } else {
+                // Default: insert after search form or at top of container
+                const searchForm = document.querySelector('.search-form');
+                const container = document.querySelector('.container');
+                if (searchForm) {
+                    searchForm.parentNode.insertBefore(progressDiv, searchForm.nextSibling);
+                } else if (container) {
+                    container.insertBefore(progressDiv, container.firstChild);
+                }
+            }
+            
+            progressDiv.style.display = 'block';
+            
+            // Start timer
+            let seconds = 0;
+            const timerElement = progressDiv.querySelector('#progress-timer');
+            if (timerElement) {
+                window.progressTimer = setInterval(() => {
+                    seconds++;
+                    timerElement.textContent = `Elapsed: ${seconds}s`;
+                }, 1000);
+            }
+        }
+        
+        // Auto-show progress for form submissions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show progress for search form submissions
+            const searchForms = document.querySelectorAll('form[action="/search"]');
+            searchForms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    showProgress('Searching for books...', 'Parsing query and fetching results');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

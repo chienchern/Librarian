@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1><a href="/">📚 The Librarian</a></h1>
+<p style="margin-bottom: 2rem; color: #666;">Find your next favorite book based on the vibes you love.</p>
+
+<form class="search-form" action="/search" method="get">
+    <input 
+        type="text" 
+        name="q" 
+        class="search-input" 
+        placeholder="Search for a book you already love..."
+        autofocus
+    >
+</form>
+{% endblock %}

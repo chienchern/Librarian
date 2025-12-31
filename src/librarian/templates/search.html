@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Search: {{ query }} - The Librarian{% endblock %}
+
+{% block content %}
+<h1><a href="/">📚 The Librarian</a></h1>
+
+<form class="search-form" action="/search" method="get">
+    <input 
+        type="text" 
+        name="q" 
+        class="search-input" 
+        placeholder="Search for a book..."
+        value="{{ query }}"
+    >
+</form>
+
+<div id="search-progress-container"></div>
+
+{% if query %}
+    {% if books %}
+        <p style="margin-bottom: 1rem; color: #666;">Select your seed book:</p>
+        {% for book in books %}
+        <div class="book-card">
+            {% if book.thumbnail %}
+            <img src="{{ book.thumbnail }}" alt="{{ book.title }}">
+            {% endif %}
+            <div class="book-info">
+                <div class="book-title">{{ book.title }}</div>
+                <div class="book-author">by {{ book.author }}</div>
+                {% if book.blurb %}
+                <div class="book-blurb">{{ book.blurb[:200] }}{% if book.blurb|length > 200 %}...{% endif %}</div>
+                {% endif %}
+                <button class="select-btn" onclick="selectBook('{{ book.book_id }}', this)">
+                    Analyze Book DNA
+                </button>
+            </div>
+        </div>
+        <div id="book-progress-{{ book.book_id }}" class="book-progress-container"></div>
+        {% endfor %}
+    {% else %}
+        <p>No books found for "{{ query }}"</p>
+    {% endif %}
+{% endif %}
+
+<script>
+function selectBook(bookId, clickedButton) {
+    // Hide all other book cards and update the selected one
+    const allBookCards = document.querySelectorAll('.book-card');
+    allBookCards.forEach(card => {
+        const button = card.querySelector('.select-btn');
+        if (button === clickedButton) {
+            // This is the selected book - keep it visible but disable the button
+            button.disabled = true;
+            button.textContent = 'Analyzing...';
+            button.style.background = '#666';
+            button.style.cursor = 'not-allowed';
+        } else {
+            // Hide other books immediately
+            card.style.display = 'none';
+        }
+    });
+    
+    // Show progress indicator with timer below the selected book
+    showProgressWithTimer('Analyzing book DNA...', 'This may take up to 30 seconds - please be patient', `book-progress-${bookId}`);
+    
+    // Start book analysis
+    window.location.href = `/book/${bookId}/analyze`;
+      
+}
+</script>
+{% endblock %}

@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}DNA Analysis - The Librarian{% endblock %}
+
+{% block content %}
+<h1><a href="/">📚 The Librarian</a></h1>
+
+<div class="book-summary">
+    <img src="{{ book.thumbnail }}" alt="{{ book.title }} cover">
+    <div class="book-summary-content">
+        <h2>{{ book.title }}</h2>
+        <p>by {{ book.author }}</p>
+    </div>
+</div>
+
+<!-- Hidden DNA data for JavaScript -->
+<div id="dna-data" style="display: none;">
+    <div data-book-id="{{ book.book_id }}"></div>
+    <div data-dna='{{ {
+        "book_id": book.book_id,
+        "title": dna.title,
+        "genre": dna.genre,
+        "setting": {
+            "time": dna.setting.time,
+            "place": dna.setting.place,
+            "vibe": dna.setting.vibe,
+            "full_text": dna.setting.full_text,
+            "summary": dna.setting.summary
+        },
+        "narrative_engine": {
+            "full_text": dna.narrative_engine.full_text,
+            "summary": dna.narrative_engine.summary
+        },
+        "prose_texture": {
+            "full_text": dna.prose_texture.full_text,
+            "summary": dna.prose_texture.summary
+        },
+        "emotional_profile": {
+            "full_text": dna.emotional_profile.full_text,
+            "summary": dna.emotional_profile.summary
+        },
+        "structural_quirks": {
+            "full_text": dna.structural_quirks.full_text,
+            "summary": dna.structural_quirks.summary
+        },
+        "theme": {
+            "full_text": dna.theme.full_text,
+            "summary": dna.theme.summary
+        },
+        "dealbreakers": dna.dealbreakers
+    } | tojson }}'></div>
+</div>
+
+
+<div class="dna-section">
+    <h3>Book DNA Analysis</h3>
+    <div id="selection-counter-placeholder"></div>
+    <p>Select 1-3 DNA tiles that represent the "vibe" you want to keep:</p>
+    
+    <div class="dna-grid">
+        <div class="dna-tile" data-pillar="prose_texture" data-priority="1">
+            <h4>Prose Texture</h4>
+            <div class="pillar-summary">{{ dna.prose_texture.summary }}</div>
+            <div class="pillar-full-text">{{ dna.prose_texture.full_text }}</div>
+        </div>
+        
+        <div class="dna-tile" data-pillar="emotional_profile" data-priority="2">
+            <h4>Emotional Profile</h4>
+            <div class="pillar-summary">{{ dna.emotional_profile.summary }}</div>
+            <div class="pillar-full-text">{{ dna.emotional_profile.full_text }}</div>
+        </div>
+        
+        <div class="dna-tile" data-pillar="theme" data-priority="3">
+            <h4>Theme</h4>
+            <div class="pillar-summary">{{ dna.theme.summary }}</div>
+            <div class="pillar-full-text">{{ dna.theme.full_text }}</div>
+        </div>
+        
+        <div class="dna-tile" data-pillar="setting" data-priority="4">
+            <h4>Setting</h4>
+            <div class="pillar-summary">{{ dna.setting.summary }}</div>
+            <div class="setting-details">
+                <span class="setting-item">{{ dna.setting.time }}</span>
+                <span class="setting-item">{{ dna.setting.place }}</span>
+                <span class="setting-item">{{ dna.setting.vibe }}</span>
+            </div>
+            <div class="pillar-full-text">{{ dna.setting.full_text }}</div>
+        </div>
+        
+        <div class="dna-tile" data-pillar="narrative_engine" data-priority="5">
+            <h4>Narrative Engine</h4>
+            <div class="pillar-summary">{{ dna.narrative_engine.summary }}</div>
+            <div class="pillar-full-text">{{ dna.narrative_engine.full_text }}</div>
+        </div>
+        
+        <div class="dna-tile" data-pillar="structural_quirks" data-priority="6">
+            <h4>Structural Quirks</h4>
+            <div class="pillar-summary">{{ dna.structural_quirks.summary }}</div>
+            <div class="pillar-full-text">{{ dna.structural_quirks.full_text }}</div>
+        </div>
+    </div>
+    
+    <div class="dealbreakers-section">
+        <h4>Potential Dealbreakers</h4>
+        <p>Mark any elements you want to avoid:</p>
+        <div class="dealbreakers-grid">
+            {% for dealbreaker in dna.dealbreakers %}
+            <div class="dealbreaker-tile" data-dealbreaker="{{ dealbreaker }}">
+                {{ dealbreaker }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <button id="find-recommendations" class="primary-btn">Find Recommendations</button>
+        <button id="back-to-search" class="secondary-btn">Back to Search</button>
+    </div>
+    
+    <!-- Progress container positioned below the buttons -->
+    <div id="recommendations-progress-container"></div>
+</div>
+
+<script>
+// Track selected DNA tiles and dealbreakers
+let selectedPillars = new Set();
+let selectedDealbreakers = new Set();
+const MAX_SELECTIONS = 3;
+
+// DNA tile selection with limit enforcement
+document.querySelectorAll('.dna-tile').forEach(tile => {
+    tile.addEventListener('click', () => {
+        const pillar = tile.dataset.pillar;
+        
+        if (selectedPillars.has(pillar)) {
+            // Deselecting - always allowed
+            selectedPillars.delete(pillar);
+            tile.classList.remove('selected');
+            updateTileStates();
+        } else if (selectedPillars.size < MAX_SELECTIONS) {
+            // Selecting - only if under limit
+            selectedPillars.add(pillar);
+            tile.classList.add('selected');
+            updateTileStates();
+        }
+        // If at limit and trying to select, do nothing (tile stays disabled)
+    });
+});
+
+// Update tile states based on selection count
+function updateTileStates() {
+    const tiles = document.querySelectorAll('.dna-tile');
+    const atLimit = selectedPillars.size >= MAX_SELECTIONS;
+    
+    tiles.forEach(tile => {
+        const pillar = tile.dataset.pillar;
+        const isSelected = selectedPillars.has(pillar);
+        
+        if (atLimit && !isSelected) {
+            tile.classList.add('disabled');
+        } else {
+            tile.classList.remove('disabled');
+        }
+    });
+    
+    // Update selection counter
+    updateSelectionCounter();
+}
+
+// Show selection counter
+function updateSelectionCounter() {
+    let counter = document.getElementById('selection-counter');
+    if (!counter) {
+        counter = document.createElement('div');
+        counter.id = 'selection-counter';
+        counter.className = 'selection-counter';
+        const placeholder = document.getElementById('selection-counter-placeholder');
+        if (placeholder) {
+            placeholder.appendChild(counter);
+        }
+    }
+    counter.textContent = `Selected: ${selectedPillars.size}/${MAX_SELECTIONS}`;
+}
+
+// Dealbreaker selection
+document.querySelectorAll('.dealbreaker-tile').forEach(tile => {
+    tile.addEventListener('click', () => {
+        const dealbreaker = tile.dataset.dealbreaker;
+        if (selectedDealbreakers.has(dealbreaker)) {
+            selectedDealbreakers.delete(dealbreaker);
+            tile.classList.remove('selected');
+        } else {
+            selectedDealbreakers.add(dealbreaker);
+            tile.classList.add('selected');
+        }
+    });
+});
+
+// Find recommendations button
+document.getElementById('find-recommendations').addEventListener('click', async () => {
+    // Validate selection
+    if (selectedPillars.size === 0) {
+        alert('Please select at least 1 DNA pillar before finding recommendations.');
+        return;
+    }
+    
+    // Show initial progress indicator with timer
+    showProgressWithTimer('Finding recommendations...', 'This may take up to 30 seconds - please be patient', 'recommendations-progress-container');
+    
+    // Scroll the progress container into view
+    setTimeout(() => {
+        const progressContainer = document.getElementById('recommendations-progress-container');
+        if (progressContainer) {
+            progressContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 100);
+    
+    try {
+        // Get DNA data from hidden element
+        const dnaElement = document.querySelector('#dna-data [data-dna]');
+        const bookIdElement = document.querySelector('#dna-data [data-book-id]');
+        
+        if (!dnaElement || !bookIdElement) {
+            throw new Error('DNA data not found on page');
+        }
+        
+        const dnaData = JSON.parse(dnaElement.dataset.dna);
+        const bookId = bookIdElement.dataset.bookId;
+        
+        // Step 1: Find candidates
+        updateProgressMessage('Step 1/3: Finding candidate books...', 'Searching for books similar to your preferences');
+        
+        const candidatesRequestData = {
+            selected_pillars: Array.from(selectedPillars),
+            dealbreakers: Array.from(selectedDealbreakers),
+            dna: dnaData
+        };
+        
+        console.log('Finding candidates with:', candidatesRequestData);
+        
+        const candidatesResponse = await fetch(`/api/books/${bookId}/find-candidates`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(candidatesRequestData)
+        });
+        
+        if (!candidatesResponse.ok) {
+            const error = await candidatesResponse.json();
+            throw new Error(error.detail || 'Failed to find candidates');
+        }
+        
+        const candidates = await candidatesResponse.json();
+        console.log('Candidates found:', candidates);
+        
+        // Step 2: Rank candidates
+        updateProgressMessage('Step 2/3: Analyzing and ranking candidates...', `Analyzing ${candidates.candidates.length} books - this may take 1-2 minutes`);
+        
+        const rankingRequestData = {
+            candidates: candidates.candidates,
+            selected_pillars: Array.from(selectedPillars),
+            dealbreakers: Array.from(selectedDealbreakers),
+            seed_dna: dnaData
+        };
+        
+        console.log('Ranking candidates with:', rankingRequestData);
+        
+        const rankingResponse = await fetch(`/api/books/${bookId}/rank-candidates`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(rankingRequestData)
+        });
+        
+        if (!rankingResponse.ok) {
+            const error = await rankingResponse.json();
+            throw new Error(error.detail || 'Failed to rank candidates');
+        }
+        
+        const ranking = await rankingResponse.json();
+        console.log('Ranking completed:', ranking);
+        
+        // Step 3: Get recommendations as HTML
+        updateProgressMessage('Step 3/3: Creating personalized recommendations...', 'Crafting empathetic copy for your matches');
+        
+        const recommendationsRequestData = {
+            ranking: ranking,
+            selected_pillars: Array.from(selectedPillars),
+            dealbreakers: Array.from(selectedDealbreakers),
+            seed_dna: dnaData
+        };
+        
+        console.log('Getting recommendations HTML with:', recommendationsRequestData);
+        
+        const recommendationsResponse = await fetch(`/api/books/${bookId}/recommendations-html`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(recommendationsRequestData)
+        });
+        
+        if (!recommendationsResponse.ok) {
+            const error = await recommendationsResponse.text();
+            throw new Error(error || 'Failed to get recommendations');
+        }
+        
+        const recommendationsHtml = await recommendationsResponse.text();
+        console.log('Recommendations HTML received');
+        
+        hideProgress();
+        
+        // Display recommendations by inserting HTML
+        displayRecommendationsHtml(recommendationsHtml);
+        
+    } catch (error) {
+        hideProgress();
+        console.error('Error finding recommendations:', error);
+        alert(`Error finding recommendations: ${error.message}`);
+    }
+});
+
+// Display recommendations by inserting HTML
+function displayRecommendationsHtml(html) {
+    // Create or update recommendations section
+    let recommendationsSection = document.getElementById('recommendations-section');
+    if (!recommendationsSection) {
+        recommendationsSection = document.createElement('div');
+        recommendationsSection.id = 'recommendations-section';
+        recommendationsSection.className = 'recommendations-section';
+        
+        // Insert after dealbreakers section
+        const dealbreakersSection = document.querySelector('.dealbreakers-section');
+        dealbreakersSection.parentNode.insertBefore(recommendationsSection, dealbreakersSection.nextSibling);
+    }
+    
+    // Insert the rendered HTML
+    recommendationsSection.innerHTML = html;
+    
+    // Scroll to recommendations section
+    recommendationsSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Back to search button
+document.getElementById('back-to-search').addEventListener('click', () => {
+    showProgressWithTimer('Loading search...', 'Returning to book search', 'recommendations-progress-container');
+    
+    // Scroll the progress container into view
+    setTimeout(() => {
+        const progressContainer = document.getElementById('recommendations-progress-container');
+        if (progressContainer) {
+            progressContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 100);
+    
+    window.location.href = '/';
+});
+</script>
+{% endblock %}

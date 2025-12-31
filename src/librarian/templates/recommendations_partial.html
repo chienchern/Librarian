@@ -1,0 +1,36 @@
+<h4>Your Personalized Book Recommendations</h4>
+<p>Curated based on your selected preferences ({{ recommendations.total_analyzed }} books analyzed):</p>
+<div class="recommendations-grid">
+    {% for rec in recommendations.recommendations %}
+    {% set rank_badge = '🥇' if rec.rank == 1 else '🥈' if rec.rank == 2 else '🥉' %}
+    {% set google_search_url = 'https://www.google.com/search?q=' + (rec.title + ' by ' + rec.author) | urlencode %}
+    <div class="recommendation-card enhanced-recommendation clickable-recommendation" data-rank="{{ rec.rank }}" onclick="window.open('{{ google_search_url }}', '_blank')">
+        <div class="recommendation-header">
+            <div class="recommendation-rank">
+                <span class="rank-badge">{{ rank_badge }} #{{ rec.rank }}</span>
+                <span class="confidence-score">{{ "%.1f"|format(rec.confidence_score) }}% match</span>
+            </div>
+            <div class="recommendation-title">{{ rec.title }}</div>
+            <div class="recommendation-author">by {{ rec.author }}</div>
+        </div>
+        
+        <div class="recommendation-content">
+            <div class="why-it-matches">
+                <h5>Why It Matches</h5>
+                <p>{{ rec.why_it_matches }}</p>
+            </div>
+            
+            <div class="what-is-fresh">
+                <h5>What Is Fresh</h5>
+                <p>{{ rec.what_is_fresh }}</p>
+            </div>
+        </div>
+        
+        <div class="click-hint">Click to search on Google</div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if recommendations.failed_analyses > 0 %}
+<p class="analysis-note">Note: {{ recommendations.failed_analyses }} candidate(s) could not be analyzed and were excluded.</p>
+{% endif %}
