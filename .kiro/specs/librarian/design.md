@@ -1,99 +1,43 @@
 # Design Document
 
+## Table of Contents
+1. [Overview](#overview)
+2. [User Journey Flow](#user-journey-flow)
+3. [Architecture](#architecture)
+   - [System Flow](#system-flow)
+   - [Agent Architecture](#agent-architecture)
+   - [Technical Stack](#technical-stack)
+4. [Agent Specifications](#agent-specifications)
+   - [BookAnalyzer Agent](#bookanalyzer-agent)
+   - [CandidatesFinder Agent](#candidatesfinder-agent)
+   - [BookRanker Agent](#bookranker-agent)
+   - [RecommendationsWriter Agent](#recommendationswriter-agent)
+5. [Data Models](#data-models)
+   - [Core DNA Structure](#core-dna-structure)
+   - [Pillar Priority Order](#pillar-priority-order)
+   - [Candidate Flow Models](#candidate-flow-models)
+6. [Frontend Integration](#frontend-integration)
+   - [User Interface Flow](#user-interface-flow)
+   - [JavaScript Orchestration](#javascript-orchestration)
+   - [Progress Management](#progress-management)
+7. [Error Handling & Resilience](#error-handling--resilience)
+   - [Agent-Level Error Handling](#agent-level-error-handling)
+   - [System-Level Resilience](#system-level-resilience)
+8. [Performance Optimizations](#performance-optimizations)
+   - [BookAnalyzer Optimizations](#bookanalyzer-optimizations)
+   - [Token Management](#token-management)
+   - [Logging Strategy](#logging-strategy)
+9. [Deployment Considerations](#deployment-considerations)
+   - [API Dependencies](#api-dependencies)
+   - [Environment Configuration](#environment-configuration)
+
 ## Overview
 
 The Librarian is a sophisticated AI-powered book recommendation system that uses multiple specialized agents to analyze books, find candidates, rank them, and generate empathetic recommendations. The system deconstructs books into "DNA Pillars," allows users to select their preferences, and discovers fresh recommendations that match their vibe while offering new experiences.
 
-## System Architecture Diagrams
+## User Journey Flow
 
-### User Journey Flow
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'fontSize':'12px', 'fontFamily':'arial', 'lineColor':'#333333', 'primaryTextColor':'#333333'}}}%%
-flowchart TD
-    subgraph journey[" "]
-        A["Search for a book you love
-                <small><i>
-                    - Google Books API
-                </i></small>"] 
-        --> B[Select your seed book]
-        B --> C["Review the book's DNA analysis
-                <small><i>
-                    - BookAnalyzer Agent
-                    - Exa.ai web search
-                </i></small>"]
-        C --> D[Choose 1-3 pillars that matter to you]
-        D --> E[Mark any dealbreakers to avoid]
-        E --> F["Get personalized recommendations 
-                <small><i>
-                    - CandidatesFinder + Tavily
-                    - BookRanker (using BookAnalyzer on candidates)
-                    - RecommendationsWriter
-                </i></small>"]
-    end
-    
-    style A fill:#f8f9fa,stroke:#6c757d,color:#333333
-    style B fill:#f8f9fa,stroke:#6c757d,color:#333333
-    style C fill:#e3f2fd,stroke:#1976d2,color:#333333
-    style D fill:#f8f9fa,stroke:#6c757d,color:#333333
-    style E fill:#f8f9fa,stroke:#6c757d,color:#333333
-    style F fill:#e8f5e8,stroke:#388e3c,color:#333333
-    style journey fill:#e9ecef,stroke:#adb5bd,stroke-width:2px
-```
-
-### Technical Architecture
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'fontSize':'12px', 'fontFamily':'arial'}}}%%
-graph TB
-    subgraph arch[" "]
-        subgraph "Frontend"
-            UI[Web Interface]
-        end
-        
-        subgraph "API Layer"
-            API[FastAPI Backend]
-            GB[Google Books API]
-        end
-        
-        subgraph "AI Agents"
-            BA[BookAnalyzer<br/>DNA Extraction]
-            CF[CandidatesFinder<br/>Book Discovery]
-            BR[BookRanker<br/>Analysis & Scoring]
-            RW[RecommendationsWriter<br/>Empathetic Copy]
-        end
-        
-        subgraph "External Services"
-            EXA[Exa.ai<br/>Neural Search]
-            TAV[Tavily<br/>Web Search]
-            GEM[Gemini 2.5 Flash<br/>Language Model]
-        end
-        
-        UI --> API
-        API --> GB
-        API --> BA
-        API --> CF
-        API --> BR
-        API --> RW
-        
-        BA --> EXA
-        CF --> TAV
-        BR --> BA
-        
-        BA --> GEM
-        CF --> GEM
-        BR --> GEM
-        RW --> GEM
-    end
-    
-    style BA fill:#e1f5fe,stroke:#1976d2
-    style CF fill:#e8f5e8,stroke:#388e3c
-    style BR fill:#fff3e0,stroke:#f57c00
-    style RW fill:#fce4ec,stroke:#c2185b
-    style arch fill:#e9ecef,stroke:#adb5bd,stroke-width:2px
-```
-
-
+See [User Journey Flow Diagram](design-user-journey-flow.md) for the complete user experience flow from book search to personalized recommendations.
 
 ## Architecture
 
@@ -105,6 +49,8 @@ graph TB
 5. **Candidate Analysis & Ranking:** BookRanker agent analyzes each candidate and ranks them with confidence scores
 6. **Empathetic Copy Generation:** RecommendationsWriter agent transforms technical analysis into user-friendly recommendations
 7. **Final Presentation:** Up to 3 recommendations displayed with "Why It Matches" and "What Is Fresh" explanations
+
+See [Technical Architecture Diagram](design-technical-architecture.md) for the system's technical components and their interactions.
 
 ### Agent Architecture
 
