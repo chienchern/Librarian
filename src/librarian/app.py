@@ -77,7 +77,7 @@ async def analyze_book_page(request: Request, book_id: str):
     logger.info(f"Book metadata retrieved: {book.title} by {book.author}", extra={'response': True})
     
     # Analyze the book
-    dna = book_analyzer.analyze(book.title, book.author, book_id)
+    dna = await book_analyzer.analyze(book.title, book.author, book_id)
     if not dna:
         logger.error(f"Analysis failed for: {book.title}")
         raise HTTPException(status_code=500, detail="Analysis failed")
@@ -115,7 +115,7 @@ async def api_analyze_book(book_id: str) -> BookDNAResponse:
         raise HTTPException(status_code=404, detail="Book not found")
     
     # Analyze the book
-    dna = book_analyzer.analyze(book.title, book.author, book_id)
+    dna = await book_analyzer.analyze(book.title, book.author, book_id)
     if not dna:
         raise HTTPException(status_code=500, detail="Analysis failed")
     
@@ -159,7 +159,7 @@ async def api_find_candidates(
     
     # Find candidates using provided DNA (no re-analysis needed)
     try:
-        candidates = candidates_finder.find_candidates(dna, selected_pillars, selected_dealbreakers)
+        candidates = await candidates_finder.find_candidates(dna, selected_pillars, selected_dealbreakers)
         if not candidates:
             raise HTTPException(status_code=500, detail="Candidate search failed - please try again")
         
@@ -205,7 +205,7 @@ async def api_rank_candidates(
     
     # Rank candidates
     try:
-        ranking = book_ranker.rank_candidates(seed_dna, candidates, selected_pillars, selected_dealbreakers)
+        ranking = await book_ranker.rank_candidates(seed_dna, candidates, selected_pillars, selected_dealbreakers)
         
         if not ranking.candidates:
             raise HTTPException(status_code=404, detail="No candidates could be ranked. All analyses may have failed.")
@@ -249,7 +249,7 @@ async def api_write_recommendations(
     
     # Write empathetic recommendations
     try:
-        recommendations = recommendations_writer.write_recommendations(
+        recommendations = await recommendations_writer.write_recommendations(
             seed_dna, ranking, selected_pillars, selected_dealbreakers
         )
         

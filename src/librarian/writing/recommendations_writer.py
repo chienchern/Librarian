@@ -83,7 +83,7 @@ class RecommendationsWriter:
         
         return '\n\n'.join(candidate_summaries)
     
-    def write_recommendations(
+    async def write_recommendations(
         self,
         seed_dna: BookDNAResponse,
         ranking: RankingResponse,
@@ -93,7 +93,7 @@ class RecommendationsWriter:
         """Transform ranked candidates into empathetic recommendation copy."""
         try:
             logger.info(f"RECOMMENDATIONS WRITER: Creating empathetic copy for {len(ranking.candidates)} recommendations", extra={'step': True})
-            
+
             if not ranking.candidates:
                 logger.warning("No candidates to write recommendations for")
                 return RecommendationResponse(
@@ -101,7 +101,7 @@ class RecommendationsWriter:
                     total_analyzed=ranking.total_analyzed,
                     failed_analyses=ranking.failed_analyses
                 )
-            
+
             # Build context for the LLM
             pillar_descriptions = []
             for pillar_name in selected_pillars:
@@ -111,13 +111,13 @@ class RecommendationsWriter:
                 else:
                     desc = f"{pillar_name.replace('_', ' ').title()}: {pillar.full_text}"
                 pillar_descriptions.append(desc)
-            
+
             pillar_text = '\n'.join(f"- {desc}" for desc in pillar_descriptions)
             dealbreaker_text = ', '.join(dealbreakers) if dealbreakers else 'None'
-            
+
             # Build candidate summaries for empathetic writing
             candidates_text = self._build_candidate_summaries(ranking)
-            
+
             # Create empathetic writing prompt
             prompt = self.task_prompt_template.format(
                 seed_title=seed_dna.title,
@@ -126,19 +126,19 @@ class RecommendationsWriter:
                 dealbreaker_text=dealbreaker_text,
                 candidates_text=candidates_text
             )
-            
+
             logger.info(f"Writing empathetic recommendations...", extra={'query': True})
             logger.info(f"Prompt: {prompt}...", extra={'query': True})
-            
-            # Execute empathetic writing
-            result = self.agent(
+
+            # Execute empathetic writing (async)
+            result = await self.agent.invoke_async(
                 prompt,
                 structured_output_model=RecommendationOutput
             )
-            
+
             llm_output = result.structured_output
             logger.info(f"✓ Empathetic copy generated for {len(llm_output.recommendations)} recommendations", extra={'response': True})
-            
+
             # Convert to final response format
             recommendations = [
                 RecommendationCard(
@@ -152,23 +152,23 @@ class RecommendationsWriter:
                 )
                 for rec in llm_output.recommendations
             ]
-            
+
             # Create final response
             response = RecommendationResponse(
                 recommendations=recommendations,
                 total_analyzed=ranking.total_analyzed,
                 failed_analyses=ranking.failed_analyses
             )
-            
+
             # Log the empathetic copy
             for rec in response.recommendations:
                 logger.info(f"Recommendation {rec.rank}: '{rec.title}' by {rec.author}", extra={'response': True})
                 logger.info(f"  Why It Matches: {rec.why_it_matches[:100]}...", extra={'response': True})
                 logger.info(f"  What Is Fresh: {rec.what_is_fresh[:100]}...", extra={'response': True})
-            
+
             logger.info(f"Recommendations writing completed successfully", extra={'response': True})
             return response
-            
+
         except StructuredOutputException as e:
             logger.error(f"Structured output failed for recommendations writing: {e}")
             return RecommendationResponse(

@@ -26,19 +26,19 @@ class QueryParser:
         )
         self.agent = Agent(model=self.model, system_prompt=self.system_prompt)
     
-    def parse(self, query: str) -> ParsedBookQuery:
+    async def parse(self, query: str) -> ParsedBookQuery:
         """Parse a user's search query into structured fields."""
         try:
             logger.info(f"Gemini query parser prompt: Parse this book search query: {query}", extra={'query': True})
-            
-            result = self.agent(
+
+            result = await self.agent.invoke_async(
                 f"Parse this book search query: {query}",
                 structured_output_model=ParsedBookQuery
             )
-            
+
             parsed = result.structured_output
             logger.info(f"Gemini parser response: title={parsed.title!r}, author={parsed.author!r}", extra={'response': True})
-            
+
             return parsed
         except StructuredOutputException as e:
             logger.warning(f"Structured output failed: {e}")

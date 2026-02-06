@@ -32,7 +32,7 @@ class BooksAPI:
         search_query = query
         if self.query_parser:
             try:
-                parsed = self.query_parser.parse(query)
+                parsed = await self.query_parser.parse(query)
                 logger.info(f"LLM parsed - title: {parsed.title!r}, author: {parsed.author!r}", extra={'response': True})
                 structured_query = parsed.to_google_query()
                 if structured_query:

@@ -70,13 +70,13 @@ async def search_book_analysis_parallel(queries: list[str], num_results: int = 3
     logger.info(f"Running {len(queries)} parallel Exa searches", extra={'query': True})
     
     # Run searches in parallel using thread pool
+    loop = asyncio.get_running_loop()
     with ThreadPoolExecutor(max_workers=3) as executor:
-        loop = asyncio.get_event_loop()
         tasks = [
             loop.run_in_executor(executor, _sync_exa_search, query, num_results)
             for query in queries
         ]
-        
+
         results = await asyncio.gather(*tasks)
     
     # Combine all results

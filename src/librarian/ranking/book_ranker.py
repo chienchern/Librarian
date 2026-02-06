@@ -41,31 +41,31 @@ class BookRanker:
         # Initialize BookAnalyzer for candidate analysis
         self.book_analyzer = BookAnalyzer()
     
-    def rank_candidates(
-        self, 
+    async def rank_candidates(
+        self,
         seed_dna: BookDNAResponse,
-        candidates: CandidateList, 
-        selected_pillars: list[str], 
+        candidates: CandidateList,
+        selected_pillars: list[str],
         dealbreakers: list[str]
     ) -> RankingResponse:
         """Rank book candidates based on DNA analysis and user preferences."""
         try:
             logger.info(f"BOOK RANKER: Ranking {len(candidates.candidates)} candidates", extra={'step': True})
-            
+
             # Step 1: Analyze each candidate sequentially
             analyzed_candidates = []
             failed_count = 0
             total_candidates = len(candidates.candidates)
-            
+
             for i, candidate in enumerate(candidates.candidates, 1):
                 logger.info(f"Analyzing candidate {i}/{total_candidates}: '{candidate.title}' by {candidate.author}...", extra={'query': True})
-                
-                # Analyze candidate using BookAnalyzer
-                candidate_dna = self.book_analyzer.analyze(
+
+                # Analyze candidate using BookAnalyzer (async)
+                candidate_dna = await self.book_analyzer.analyze(
                     title=candidate.title,
                     author=candidate.author
                 )
-                
+
                 if candidate_dna:
                     analyzed_candidates.append({
                         'candidate': candidate,
@@ -75,7 +75,7 @@ class BookRanker:
                 else:
                     failed_count += 1
                     logger.warning(f"✗ Candidate {i}/{total_candidates} analysis failed: '{candidate.title}' - skipping", extra={'response': True})
-            
+
             if not analyzed_candidates:
                 logger.error("All candidate analyses failed")
                 return RankingResponse(
@@ -83,10 +83,10 @@ class BookRanker:
                     total_analyzed=0,
                     failed_analyses=failed_count
                 )
-            
+
             # Step 2: Rank candidates using LLM
             logger.info(f"Ranking {len(analyzed_candidates)} analyzed candidates...", extra={'query': True})
-            
+
             # Build pillar descriptions for ranking
             pillar_descriptions = []
             for pillar_name in selected_pillars:
@@ -96,11 +96,11 @@ class BookRanker:
                 else:
                     desc = f"{pillar_name.replace('_', ' ').title()}: {pillar.full_text}"
                 pillar_descriptions.append(desc)
-            
+
             # Create ranking prompt
             pillar_text = '\n'.join(f"- {desc}" for desc in pillar_descriptions)
             dealbreaker_text = ', '.join(dealbreakers) if dealbreakers else 'None'
-            
+
             # Build candidate DNA summaries for LLM
             candidate_summaries = []
             for i, item in enumerate(analyzed_candidates, 1):
@@ -118,9 +118,9 @@ Candidate {i}: "{candidate.title}" by {candidate.author}
 - Dealbreakers: {', '.join(dna.dealbreakers)}
 """
                 candidate_summaries.append(summary.strip())
-            
+
             candidates_text = '\n\n'.join(candidate_summaries)
-            
+
             prompt = self.task_prompt_template.format(
                 seed_title=seed_dna.title,
                 pillar_text=pillar_text,
@@ -128,36 +128,36 @@ Candidate {i}: "{candidate.title}" by {candidate.author}
                 candidates_text=candidates_text,
                 num_candidates=len(analyzed_candidates)
             )
-            
+
             logger.info(f"Ranking prompt: {prompt}...", extra={'query': True})
-            
-            # Execute ranking
+
+            # Execute ranking (async)
             try:
-                result = self.agent(
+                result = await self.agent.invoke_async(
                     prompt,
                     structured_output_model=RankingOutput
                 )
-                
+
                 llm_ranking = result.structured_output
                 logger.info(f"LLM ranking output: {len(llm_ranking.candidates)} candidates returned", extra={'response': True})
-                
+
             except StructuredOutputException as e:
                 logger.error(f"LLM failed to produce structured ranking output: {e}")
                 logger.error(f"Prompt length: {len(prompt)} chars")
                 logger.error(f"Number of candidates to rank: {len(analyzed_candidates)}")
                 raise
-            
+
             # Convert LLM output to full RankedCandidate objects with DNA
             ranked_candidates = []
             for llm_candidate in llm_ranking.candidates:
                 # Find matching analyzed candidate to get DNA
                 candidate_dna = None
                 for item in analyzed_candidates:
-                    if (item['candidate'].title == llm_candidate.title and 
+                    if (item['candidate'].title == llm_candidate.title and
                         item['candidate'].author == llm_candidate.author):
                         candidate_dna = item['dna']
                         break
-                
+
                 ranked_candidate = RankedCandidate(
                     title=llm_candidate.title,
                     author=llm_candidate.author,
@@ -167,22 +167,22 @@ Candidate {i}: "{candidate.title}" by {candidate.author}
                     dna=candidate_dna
                 )
                 ranked_candidates.append(ranked_candidate)
-            
+
             # Create final response
             ranking = RankingResponse(
                 candidates=ranked_candidates,
                 total_analyzed=len(analyzed_candidates),
                 failed_analyses=failed_count
             )
-            
+
             logger.info(f"✓ Ranking completed - {len(ranking.candidates)} candidates ranked", extra={'response': True})
-            
+
             for candidate in ranking.candidates:
                 logger.info(f"Rank {candidate.rank}: '{candidate.title}' (Score: {candidate.confidence_score})", extra={'response': True})
                 logger.info(f"  Reasoning: {candidate.reasoning}", extra={'response': True})
-            
+
             return ranking
-            
+
         except StructuredOutputException as e:
             logger.error(f"Structured output failed for ranking: {e}")
             return RankingResponse(candidates=[], total_analyzed=0, failed_analyses=len(candidates.candidates))

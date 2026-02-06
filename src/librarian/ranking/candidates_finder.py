@@ -48,10 +48,10 @@ class CandidatesFinder:
             tools=[search_book_candidates]
         )
     
-    def find_candidates(
-        self, 
-        seed_book_dna: BookDNAResponse, 
-        selected_pillars: list[str], 
+    async def find_candidates(
+        self,
+        seed_book_dna: BookDNAResponse,
+        selected_pillars: list[str],
         dealbreakers: list[str]
     ) -> CandidateList | None:
         """Find book candidates based on user-selected pillars and dealbreakers."""
@@ -60,7 +60,7 @@ class CandidatesFinder:
             logger.info(f"BOOK CANDIDATES FINDER: {seed_book_dna.title}", extra={'step': True})
             logger.info(f"Selected pillars: {selected_pillars}", extra={'query': True})
             logger.info(f"Selected dealbreakers: {dealbreakers}", extra={'query': True})
-            
+
             # Build pillar descriptions for LLM filtering
             pillar_descriptions = []
             for pillar_name in selected_pillars:
@@ -70,52 +70,52 @@ class CandidatesFinder:
                 else:
                     desc = f"{pillar_name.replace('_', ' ').title()}: {pillar.full_text}"
                 pillar_descriptions.append(desc)
-            
+
             logger.info(f"Pillar descriptions for filtering: {pillar_descriptions}", extra={'query': True})
-            
+
             # Create single broad search query
             query = f'books similar to "{seed_book_dna.title}" recommendations'
             logger.info(f"Tavily search query: {query}", extra={'query': True})
-            
+
             # Create the prompt for LLM to filter results
             pillar_text = '\n'.join(f"- {desc}" for desc in pillar_descriptions)
             dealbreaker_text = ', '.join(dealbreakers) if dealbreakers else 'None'
-            
+
             prompt = self.task_prompt_template.format(
                 query=query,
                 pillar_text=pillar_text,
                 dealbreaker_text=dealbreaker_text,
                 seed_title=seed_book_dna.title
             )
-            
+
             logger.info(f"LLM filtering prompt: {prompt}...", extra={'query': True})
-            
+
             # Execute single LLM call with broad search + intelligent filtering
-            result = self.agent(
+            result = await self.agent.invoke_async(
                 prompt,
                 structured_output_model=CandidateList
             )
-            
+
             # Log the results
             candidates = result.structured_output
             logger.info(f"LLM found {len(candidates.candidates)} candidates with ranking explanations", extra={'response': True})
-            
+
             # Log all 5 candidates with their ranking explanations
             for i, candidate in enumerate(candidates.candidates, 1):
                 logger.info(f"Rank {i}: '{candidate.title}' by {candidate.author}", extra={'response': True})
                 logger.info(f"  Ranking explanation: {candidate.source_snippet}", extra={'response': True})
-            
+
             # Select top 3 candidates for analysis
             top_candidates = CandidateList(candidates=candidates.candidates[:3])
             logger.info(f"Selected top 3 candidates for DNA analysis", extra={'response': True})
-            
+
             for i, candidate in enumerate(top_candidates.candidates, 1):
                 logger.info(f"Analyzing: Rank {i} - '{candidate.title}' by {candidate.author}", extra={'response': True})
-            
+
             # Return top 3 candidates for analysis
             logger.info(f"Candidates finding completed successfully", extra={'response': True})
             return top_candidates
-            
+
         except StructuredOutputException as e:
             logger.error(f"Structured output failed for candidates: {e}")
             return None
