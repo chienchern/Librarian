@@ -15,8 +15,8 @@ The Librarian solves this by being a **Vibe-Based Discovery Engine** that priori
 ## How It Works
 
 1. **Search** - Find a book you loved
-2. **Analyze** - The system extracts the book's "DNA" (setting, narrative engine, prose texture, emotional profile, structural quirks, themes)
-3. **Discover** - Get recommendations based on the specific elements that made you love the original book
+2. **Analyze** - AI extracts the book's "DNA" (setting, narrative engine, prose texture, emotional profile, structural quirks, theme)
+3. **Discover** - Get LLM-powered recommendations based on the specific elements that made you love the original book
 4. **Pivot** - Find books that share your favorite aspects but offer fresh experiences
 
 ## Tech Stack
@@ -25,7 +25,8 @@ The Librarian solves this by being a **Vibe-Based Discovery Engine** that priori
 - **Web Framework**: FastAPI
 - **Templating**: Jinja2 (server-rendered HTML)
 - **Agent Framework**: Strands
-- **APIs**: 
+- **LLM**: Google Gemini (powers AI analysis, ranking, and recommendation writing)
+- **APIs**:
   - Google Books API (book metadata)
   - Exa.ai (web search for book analysis)
   - Tavily (web search for candidate finding)
