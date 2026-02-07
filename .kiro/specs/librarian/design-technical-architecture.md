@@ -14,6 +14,7 @@ graph TB
         end
         
         subgraph "AI Agents"
+            QP[QueryParser<br/>Search Query Parsing]
             BA[BookAnalyzer<br/>DNA Extraction]
             CF[CandidatesFinder<br/>Book Discovery]
             BR[BookRanker<br/>Analysis & Scoring]
@@ -23,11 +24,12 @@ graph TB
         subgraph "External Services"
             EXA[Exa.ai<br/>Neural Search]
             TAV[Tavily<br/>Web Search]
-            GEM[Gemini 2.5 Flash<br/>Language Model]
+            GEM[Gemini<br/>Language Model]
         end
         
         UI --> API
         API --> GB
+        API --> QP
         API --> BA
         API --> CF
         API --> BR
@@ -37,12 +39,14 @@ graph TB
         CF --> TAV
         BR --> BA
         
+        QP --> GEM
         BA --> GEM
         CF --> GEM
         BR --> GEM
         RW --> GEM
     end
     
+    style QP fill:#f3e5f5,stroke:#7b1fa2
     style BA fill:#e1f5fe,stroke:#1976d2
     style CF fill:#e8f5e8,stroke:#388e3c
     style BR fill:#fff3e0,stroke:#f57c00
@@ -62,18 +66,19 @@ This diagram shows the technical architecture of the Librarian system:
 - **Google Books API**: External service for seed book metadata
 
 ### AI Agents Layer
+- **QueryParser**: Parses ambiguous search queries into structured title/author fields
 - **BookAnalyzer**: Extracts DNA pillars from books using web research
-- **CandidatesFinder**: Discovers similar books based on user preferences  
+- **CandidatesFinder**: Discovers similar books based on user preferences
 - **BookRanker**: Analyzes and ranks candidate books with confidence scores
 - **RecommendationsWriter**: Generates empathetic user-facing copy
 
 ### External Services Layer
 - **Exa.ai**: Neural search engine for book analysis research
 - **Tavily**: Advanced web search for candidate discovery
-- **Gemini 2.5 Flash**: Language model powering all AI agents
+- **Gemini**: Language model powering all AI agents (2.5 Flash for main agents, 3 Flash Preview for QueryParser)
 
 ### Data Flow
 1. User interactions flow from Web Interface to FastAPI Backend
 2. Backend orchestrates AI agents based on user requests
 3. Each agent uses appropriate external services for their specialized tasks
-4. All agents leverage Gemini 2.5 Flash for language understanding and generation
+4. All agents leverage Gemini for language understanding and generation

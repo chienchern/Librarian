@@ -14,10 +14,4 @@ The Inarticulate Searcher — a reader who knows how they want to feel but lacks
 
 ## Key Goals
 <!-- What are the main objectives? What does success look like? -->
-The Librarian" is a Vibe-Based Discovery Engine. It deconstructs a book into its "DNA" to help the Inarticulate Searcher. The system prioritized "Pivoting" (freshness) over "Cloning" (repetition). Success comes when the user saves a recommendation.
-
-## Scope
-<!-- What's in scope for this project? What's explicitly out of scope? -->
-
-## Constraints
-<!-- Any limitations, requirements, or non-negotiables? -->
+The Librarian is a Vibe-Based Discovery Engine. It deconstructs a book into its "DNA" to help the Inarticulate Searcher. The system prioritizes "Pivoting" (freshness) over "Cloning" (repetition). Success comes when the user discovers a book they wouldn't have found on their own.

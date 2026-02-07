@@ -18,16 +18,15 @@ Iterative, user-centric implementation of the vibe-based book discovery engine. 
   - _Requirements: 2.1_
 
 - [x] 3. Agent - Book Candidates Finder
-  - **Backend:** Strands agent using Tavily (advanced depth) to retrieve 5-6 candidates with source_snippets
+  - **Backend:** Strands agent using Tavily (advanced depth) with LLM filtering; selects top 3 candidates for analysis
   - **Frontend:** User selects Prioritize tiles and Dealbreakers before triggering search
   - Incorporate user's selections as search parameters and negative terms
   - _Requirements: 3.1, 3.2_
 
 - [x] 4. Agent - Book Ranker
-  - **Backend:** Logic engine to compare BookDNA JSONs and generate selection_logic
+  - **Backend:** Strands agent that analyzes each candidate's DNA (via BookAnalyzer) and ranks them using LLM-assigned 0-100 confidence scores
   - **Frontend:** Display ranked candidates with scores and match explanations
-  - Score +2 for pillar overlap with user-selected tiles, +3 for successful Pivot
-  - Disqualify candidates matching Dealbreakers
+  - LLM considers user-selected pillars and dealbreakers when scoring
   - _Requirements: 3.1, 3.2, 3.3_
 
 - [x] 5. Agent - Recommendations Writer

@@ -46,7 +46,7 @@ The Librarian is a vibe-based book discovery engine that helps readers find book
 2. WHEN DNA analysis completes, THE System SHALL display interactive DNA_Tiles with summaries and full descriptions
 3. WHEN the user selects pillars, THE System SHALL enforce a 1-3 selection limit (minimum 1, maximum 3)
 4. WHEN the user selects dealbreakers, THE System SHALL mark those elements to avoid in recommendations
-5. THE System SHALL prioritize selected pillars according to the pillar priority order (Prose Texture > Emotional Profile > Theme > Setting > Narrative Engine > Structural Quirks)
+5. THE System SHALL pass selected pillars to the AI agents for consideration during candidate discovery and ranking
 
 ### Requirement 3: AI-Powered Recommendation Pipeline
 
@@ -54,10 +54,10 @@ The Librarian is a vibe-based book discovery engine that helps readers find book
 
 #### Acceptance Criteria
 
-1. WHEN the user requests recommendations, THE System SHALL use a Candidates Finder agent to search for 5 similar books using web search
-2. WHEN candidates are found, THE System SHALL use a Book Ranker agent to analyze each candidate's DNA and rank them by fit
+1. WHEN the user requests recommendations, THE System SHALL use a Candidates Finder agent to search for similar books using web search and select the top 3 for analysis
+2. WHEN candidates are found, THE System SHALL use a Book Ranker agent to analyze each candidate's DNA and rank them by fit using LLM-assigned 0-100 confidence scores
 3. WHEN ranking completes, THE System SHALL use a Recommendations Writer agent to create empathetic copy explaining why each book matches and what makes it fresh
-4. THE System SHALL filter out books that match selected dealbreakers
+4. THE System SHALL instruct AI agents to avoid books that match selected dealbreakers
 5. THE System SHALL present up to 3 final recommendations with confidence scores, match explanations, and freshness highlights
 6. THE System SHALL make recommendations clickable to search for the book on Google
 

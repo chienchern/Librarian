@@ -1,30 +1,27 @@
 # Tech Stack
 
 ## Languages
-<!-- Primary programming languages -->
-- Python
+- Python 3.11+
 
 ## Frameworks
-<!-- Web frameworks, agent frameworks, etc. -->
-- Agent framework - Strands
+- Agent framework - Strands Agents (with Gemini provider)
 - Web framework - FastAPI
 - Templating - Jinja2 (server-rendered HTML)
-
-## Database
-<!-- Database choice and why -->
-
-## Infrastructure
-<!-- Hosting, deployment, cloud services -->
+- Frontend - Vanilla JavaScript
 
 ## Key Libraries
-<!-- Important dependencies and their purpose -->
-- Google Books API - Seed book metadata lookup
-- Exa.ai - Web search for Book Analyzer agent
-- Tavily - Web search for Book Candidates Finder agent
-- strands-agents-tools - Strands community tools package
+- **pydantic** - Data validation and structured output models
+- **httpx** - Async HTTP client for Google Books API
+- **python-dotenv** - Environment variable management
+- **colorama** - Colored logging output
+- **langdetect** - Language detection for filtering non-English books
+
+## External APIs
+- **Google Books API** - Seed book metadata lookup
+- **Google Gemini** - LLM powering all AI agents (2.5 Flash for main agents, 3 Flash Preview for QueryParser)
+- **Exa.ai** - Neural web search for BookAnalyzer agent
+- **Tavily** - Advanced web search for CandidatesFinder agent
 
 ## Development Tools
-<!-- Testing, linting, formatting, CI/CD -->
-
-## Decisions & Rationale
-<!-- Document key technical decisions and why they were made -->
+- **pytest** + **pytest-asyncio** - Testing framework
+- **strands-agents-tools** - Strands community tools package (Exa, Tavily wrappers)

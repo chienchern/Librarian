@@ -58,8 +58,11 @@ pip install -e .
 
 4. Set up environment variables:
 ```bash
-cp .env.example .env
-# Edit .env with your API keys
+# Create a .env file with the following keys:
+GOOGLE_BOOKS_API_KEY=your_key_here
+GEMINI_API_KEY=your_key_here
+EXA_API_KEY=your_key_here
+TAVILY_API_KEY=your_key_here
 ```
 
 5. Run the server:
@@ -84,12 +87,19 @@ src/librarian/
 
 ## API Endpoints
 
+### Web Pages
 - `GET /` - Home page with search
-- `GET /search` - Book search results
-- `GET /book/{book_id}/analyze` - Book DNA analysis page
-- `POST /api/books/{book_id}/find-candidates` - Find book candidates
-- `POST /api/books/{book_id}/rank-candidates` - Rank candidates
-- `POST /api/books/{book_id}/write-recommendations` - Generate recommendations
+- `GET /search?q=...` - Book search results
+- `GET /book/{book_id}/analyze` - Book DNA analysis page with pillar selection
+
+### JSON API
+- `GET /api/books/search?q=...` - Search for books
+- `GET /api/books/{book_id}` - Get book metadata
+- `GET /api/books/{book_id}/analyze` - Analyze book DNA
+- `POST /api/books/{book_id}/find-candidates` - Find candidate books
+- `POST /api/books/{book_id}/rank-candidates` - Rank candidates with DNA analysis
+- `POST /api/books/{book_id}/write-recommendations` - Generate recommendation copy
+- `POST /api/books/{book_id}/recommendations-html` - Get recommendations as rendered HTML
 
 ## Contributing
 
@@ -102,4 +112,4 @@ This project uses a systematic development approach:
 
 ## License
 
-[Add your license here]
+MIT License

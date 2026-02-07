@@ -45,7 +45,7 @@ See [User Journey Flow Diagram](design-user-journey-flow.md) for the complete us
 1. **Book Search & Selection:** User searches for and selects a seed book using Google Books API
 2. **DNA Analysis:** BookAnalyzer agent researches the seed book and extracts 6 DNA pillars
 3. **User Preference Selection:** User selects 1-3 DNA pillars to prioritize and marks dealbreakers
-4. **Candidate Discovery:** CandidatesFinder agent searches the web for 5 similar books
+4. **Candidate Discovery:** CandidatesFinder agent searches the web and selects the top 3 candidates for analysis
 5. **Candidate Analysis & Ranking:** BookRanker agent analyzes each candidate and ranks them with confidence scores
 6. **Empathetic Copy Generation:** RecommendationsWriter agent transforms technical analysis into user-friendly recommendations
 7. **Final Presentation:** Up to 3 recommendations displayed with "Why It Matches" and "What Is Fresh" explanations
@@ -54,25 +54,41 @@ See [Technical Architecture Diagram](design-technical-architecture.md) for the s
 
 ### Agent Architecture
 
-The system uses 4 specialized Strands agents, each with external prompt files and specific responsibilities:
+The system uses 5 specialized Strands agents, each with external prompt files and specific responsibilities:
 
 | Agent | Purpose | Tools | Model | Key Features |
 |-------|---------|-------|-------|--------------|
+| **QueryParser** | Parse ambiguous search queries | None | Gemini 3 Flash Preview | Extracts title/author from freeform queries |
 | **BookAnalyzer** | Extract DNA from any book | Exa.ai web search | Gemini 2.5 Flash | Parallel search processing, 5K char limits |
-| **CandidatesFinder** | Find 5 similar books | Tavily web search | Gemini 2.5 Flash | 400-char snippet limits, ranking explanations |
-| **BookRanker** | Analyze and rank candidates | BookAnalyzer (internal) | Gemini 2.5 Flash | Sequential analysis, confidence scoring |
+| **CandidatesFinder** | Find top 3 similar books | Tavily web search | Gemini 2.5 Flash | LLM-filtered ranking explanations |
+| **BookRanker** | Analyze and rank candidates | BookAnalyzer (internal) | Gemini 2.5 Flash | Sequential analysis, 0-100 confidence scoring |
 | **RecommendationsWriter** | Generate empathetic copy | None | Gemini 2.5 Flash | Transforms technical data to user-friendly text |
 
 ### Technical Stack
 
 - **Framework:** Strands Agents with FastAPI backend
-- **LLM:** Google Gemini 2.5 Flash for all agents
+- **LLM:** Google Gemini 2.5 Flash (main agents) and Gemini 3 Flash Preview (QueryParser)
 - **Web Search:** Exa.ai (neural search) and Tavily (advanced search)
 - **Frontend:** Server-rendered HTML with Jinja2 templates and vanilla JavaScript
-- **Data:** Google Books API for seed book metadata
-- **Logging:** Comprehensive colored logging with query/response tracking
+- **Data:** Google Books API for seed book metadata (via httpx async client)
+- **Validation:** Pydantic for all data models and structured output
+- **Language Filtering:** langdetect for filtering non-English books
+- **Config:** python-dotenv for environment variable management
+- **Logging:** Comprehensive colored logging (colorama) with query/response tracking
 
 ## Agent Specifications
+
+### QueryParser Agent
+
+**Responsibility:** Parse ambiguous book search queries into structured title/author fields
+
+**Implementation:**
+- Uses Gemini 3 Flash Preview for fast, low-cost query parsing
+- Falls back to raw query string if structured output parsing fails
+- External prompt file: `query_parser_system.md`
+- Max output tokens: 1024
+
+**Output:** ParsedBookQuery with optional title and author fields
 
 ### BookAnalyzer Agent
 
@@ -97,21 +113,22 @@ queries = [
 
 ### CandidatesFinder Agent
 
-**Responsibility:** Find 5 candidate books similar to seed book based on user preferences
+**Responsibility:** Find candidate books similar to seed book based on user preferences, selecting the top 3 for analysis
 
 **Implementation:**
 - Uses Tavily advanced search for comprehensive results
 - Single broad search query with LLM post-processing
-- 400-character limit on source snippets to prevent token overflow
+- LLM filters and ranks results, top 3 are selected for downstream analysis
 - External prompt files: `candidates_finder_system.md`, `candidates_finder_task.md`
 
 **Search Strategy:**
 ```python
 query = f'books similar to "{seed_title}" recommendations'
 # LLM filters results based on user-selected pillars and dealbreakers
+# Top 3 candidates selected: candidates.candidates[:3]
 ```
 
-**Output:** CandidateList with 5 ranked books and explanations
+**Output:** CandidateList with top 3 ranked books and explanations
 
 ### BookRanker Agent
 
@@ -151,21 +168,28 @@ query = f'books similar to "{seed_title}" recommendations'
 
 ### Core DNA Structure
 ```python
+class DNAPillar(BaseModel):
+    full_text: str    # Detailed analysis
+    summary: str      # 2-3 word summary for UI
+
+class DNASettingPillar(BaseModel):
+    time: str         # Time period or era
+    place: str        # Geographic location or setting
+    vibe: str         # Atmospheric or sensory quality
+    full_text: str    # Complete setting description
+    summary: str      # 2-3 word summary for UI
+
 class BookDNAResponse(BaseModel):
-    book_id: str | None
+    book_id: str
     title: str
     genre: str
-    setting: DNAPillar          # Time, place, atmosphere
+    setting: DNASettingPillar   # Time, place, vibe, atmosphere
     narrative_engine: DNAPillar # Plot/character/concept-driven
     prose_texture: DNAPillar    # Writing style and voice
     emotional_profile: DNAPillar # Dominant emotional resonance
     structural_quirks: DNAPillar # Formal storytelling architecture
     theme: DNAPillar           # Central moral question
     dealbreakers: list[str]    # Elements to avoid
-
-class DNAPillar(BaseModel):
-    full_text: str    # Detailed analysis
-    summary: str      # 2-3 word summary for UI
 ```
 
 ### Pillar Priority Order
@@ -185,7 +209,7 @@ class CandidateList(BaseModel):
 class CandidateBook(BaseModel):
     title: str
     author: str
-    source_snippet: str  # Max 400 chars
+    source_snippet: str  # Ranking explanation
 
 # BookRanker output
 class RankingResponse(BaseModel):
@@ -214,6 +238,7 @@ class RecommendationCard(BaseModel):
     confidence_score: float
     why_it_matches: str
     what_is_fresh: str
+    dna: BookDNAResponse | None  # DNA analysis (None if analysis failed)
 ```
 
 ## Frontend Integration
@@ -265,10 +290,9 @@ POST /api/books/{book_id}/recommendations-html
 - Efficient content extraction and processing
 
 ### Token Management
-- 400-character limits on candidate snippets
 - External prompt files for better organization
 - Structured output models to prevent verbose responses
-- Max output tokens: 8192 (CandidatesFinder), 16384 (BookRanker)
+- Max output tokens per agent: 1024 (QueryParser), 4096 (BookAnalyzer), 8192 (CandidatesFinder), 16384 (BookRanker), 8192 (RecommendationsWriter)
 
 ### Logging Strategy
 - Colored logging with level prefixes (INFO, ERROR, etc.)
