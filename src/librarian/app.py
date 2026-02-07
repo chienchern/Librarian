@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 import logging
 from fastapi import FastAPI, Request, Query, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
@@ -17,6 +17,12 @@ from .shared.models.requests import (
     RecommendationsHtmlRequest,
 )
 from .shared.logging.colored_formatter import setup_logging
+from .shared.exceptions import (
+    LibrarianError,
+    BookNotFoundError,
+    AnalysisFailedError,
+    CandidateSearchFailedError,
+)
 
 load_dotenv()
 
@@ -45,6 +51,26 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="The Librarian", lifespan=lifespan)
 templates = Jinja2Templates(directory="src/librarian/templates")
+
+
+@app.exception_handler(LibrarianError)
+async def librarian_error_handler(request: Request, exc: LibrarianError) -> JSONResponse:
+    """Global exception handler for Librarian custom exceptions."""
+    logger.error(f"LibrarianError: {exc.message} - {exc.detail}")
+
+    # Map error types to HTTP status codes
+    status_code = 500  # Default to internal server error
+    if isinstance(exc, BookNotFoundError):
+        status_code = 404
+    elif isinstance(exc, AnalysisFailedError):
+        status_code = 500
+    elif isinstance(exc, CandidateSearchFailedError):
+        status_code = 500
+
+    return JSONResponse(
+        status_code=status_code,
+        content={"error": exc.message, "detail": exc.detail}
+    )
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -78,15 +104,15 @@ async def analyze_book_page(request: Request, book_id: str):
     book = await books_api.get_book(book_id)
     if not book:
         logger.error(f"Book not found: {book_id}")
-        raise HTTPException(status_code=404, detail="Book not found")
-    
+        raise BookNotFoundError(book_id)
+
     logger.info(f"Book metadata retrieved: {book.title} by {book.author}", extra={'response': True})
-    
+
     # Analyze the book
     dna = await book_analyzer.analyze(book.title, book.author, book_id)
     if not dna:
         logger.error(f"Analysis failed for: {book.title}")
-        raise HTTPException(status_code=500, detail="Analysis failed")
+        raise AnalysisFailedError(book.title, book.author)
     
     logger.info(f"Rendering DNA analysis page", extra={'response': True})
     return templates.TemplateResponse("dna_analysis.html", {
@@ -118,12 +144,12 @@ async def api_analyze_book(book_id: str) -> BookDNAResponse:
     # First get the book metadata
     book = await books_api.get_book(book_id)
     if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-    
+        raise BookNotFoundError(book_id)
+
     # Analyze the book
     dna = await book_analyzer.analyze(book.title, book.author, book_id)
     if not dna:
-        raise HTTPException(status_code=500, detail="Analysis failed")
+        raise AnalysisFailedError(book.title, book.author)
     
     return dna
 
@@ -166,19 +192,14 @@ async def api_find_candidates(
         raise HTTPException(status_code=400, detail="Invalid DNA data format")
     
     # Find candidates using provided DNA (no re-analysis needed)
-    try:
-        candidates = await candidates_finder.find_candidates(dna, selected_pillars, selected_dealbreakers)
-        if not candidates:
-            raise HTTPException(status_code=500, detail="Candidate search failed - please try again")
-        
-        if len(candidates.candidates) == 0:
-            raise HTTPException(status_code=404, detail="No candidates found. Try different pillar selections or fewer dealbreakers.")
-        
-        return candidates
-        
-    except Exception as e:
-        logger.error(f"Candidates finding error: {e}")
-        raise HTTPException(status_code=500, detail="Candidate search failed - please try again")
+    candidates = await candidates_finder.find_candidates(dna, selected_pillars, selected_dealbreakers)
+    if not candidates:
+        raise CandidateSearchFailedError("LLM failed to produce candidates")
+
+    if len(candidates.candidates) == 0:
+        raise CandidateSearchFailedError("No candidates found. Try different pillar selections or fewer dealbreakers.")
+
+    return candidates
 
 @app.post("/api/books/{book_id}/rank-candidates")
 async def api_rank_candidates(
