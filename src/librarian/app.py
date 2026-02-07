@@ -10,6 +10,12 @@ from .analysis import BookAnalyzer, BookDNAResponse
 from .ranking import BookRanker, CandidatesFinder, CandidateList, RankingResponse
 from .writing import RecommendationsWriter, RecommendationResponse
 from .shared.models.book_metadata import BookMetadata
+from .shared.models.requests import (
+    FindCandidatesRequest,
+    RankCandidatesRequest,
+    WriteRecommendationsRequest,
+    RecommendationsHtmlRequest,
+)
 from .shared.logging.colored_formatter import setup_logging
 
 load_dotenv()
@@ -124,16 +130,16 @@ async def api_analyze_book(book_id: str) -> BookDNAResponse:
 
 @app.post("/api/books/{book_id}/find-candidates")
 async def api_find_candidates(
-    book_id: str, 
-    request: dict
+    book_id: str,
+    request: FindCandidatesRequest
 ) -> CandidateList:
     """API endpoint to find book candidates based on selected pillars and dealbreakers."""
     logger.info(f"API endpoint hit: /api/books/{book_id}/find-candidates")
-    
+
     # Extract request data
-    selected_pillars = request.get("selected_pillars", [])
-    selected_dealbreakers = request.get("dealbreakers", [])
-    dna_data = request.get("dna")
+    selected_pillars = request.selected_pillars
+    selected_dealbreakers = request.dealbreakers
+    dna_data = request.dna
     
     if not selected_pillars:
         raise HTTPException(status_code=400, detail="At least one pillar must be selected")
@@ -175,16 +181,16 @@ async def api_find_candidates(
 @app.post("/api/books/{book_id}/rank-candidates")
 async def api_rank_candidates(
     book_id: str,
-    request: dict
+    request: RankCandidatesRequest
 ) -> RankingResponse:
     """API endpoint to rank book candidates based on DNA analysis and user preferences."""
     logger.info(f"API endpoint hit: /api/books/{book_id}/rank-candidates")
-    
+
     # Extract request data
-    candidates_data = request.get("candidates", [])
-    selected_pillars = request.get("selected_pillars", [])
-    selected_dealbreakers = request.get("dealbreakers", [])
-    seed_dna_data = request.get("seed_dna")
+    candidates_data = request.candidates
+    selected_pillars = request.selected_pillars
+    selected_dealbreakers = request.dealbreakers
+    seed_dna_data = request.seed_dna
     
     if not candidates_data:
         raise HTTPException(status_code=400, detail="Candidates data is required")
@@ -219,16 +225,16 @@ async def api_rank_candidates(
 @app.post("/api/books/{book_id}/write-recommendations")
 async def api_write_recommendations(
     book_id: str,
-    request: dict
+    request: WriteRecommendationsRequest
 ) -> RecommendationResponse:
     """API endpoint to transform ranked candidates into empathetic recommendation copy."""
     logger.info(f"API endpoint hit: /api/books/{book_id}/write-recommendations")
-    
+
     # Extract request data
-    ranking_data = request.get("ranking")
-    selected_pillars = request.get("selected_pillars", [])
-    selected_dealbreakers = request.get("dealbreakers", [])
-    seed_dna_data = request.get("seed_dna")
+    ranking_data = request.ranking
+    selected_pillars = request.selected_pillars
+    selected_dealbreakers = request.dealbreakers
+    seed_dna_data = request.seed_dna
     
     if not ranking_data:
         raise HTTPException(status_code=400, detail="Ranking data is required")
@@ -267,7 +273,7 @@ async def api_write_recommendations(
 async def api_recommendations_html(
     request: Request,
     book_id: str,
-    request_data: dict
+    request_data: WriteRecommendationsRequest
 ) -> HTMLResponse:
     """API endpoint to get recommendations as rendered HTML."""
     logger.info(f"API endpoint hit: /api/books/{book_id}/recommendations-html")
