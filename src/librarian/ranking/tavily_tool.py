@@ -1,7 +1,8 @@
 import logging
-import os
 from strands import tool
 from tavily import TavilyClient
+
+from ..shared.config.api_keys import get_tavily_api_key
 
 logger = logging.getLogger("librarian")
 
@@ -21,7 +22,7 @@ def search_book_candidates(query: str) -> str:
         logger.info(f"QUERY: Tavily search query: {query!r}", extra={'query': True})
         
         # Get API key from environment
-        api_key = os.getenv("TAVILY_API_KEY")
+        api_key = get_tavily_api_key()
         if not api_key:
             logger.error("TAVILY_API_KEY environment variable not set")
             return "Search failed: API key not configured"
