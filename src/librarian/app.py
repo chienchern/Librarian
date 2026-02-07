@@ -151,7 +151,9 @@ async def api_find_candidates(
         raise HTTPException(status_code=400, detail="DNA data is required")
     
     # Validate selected pillars exist in the DNA
-    valid_pillars = ["setting", "narrative_engine", "prose_texture", "emotional_profile", "structural_quirks", "theme"]
+    # Derive valid pillars from BookDNAResponse model (exclude metadata fields)
+    excluded_fields = {"book_id", "title", "genre", "dealbreakers"}
+    valid_pillars = [field for field in BookDNAResponse.model_fields.keys() if field not in excluded_fields]
     invalid_pillars = [p for p in selected_pillars if p not in valid_pillars]
     if invalid_pillars:
         raise HTTPException(status_code=400, detail=f"Invalid pillars: {invalid_pillars}")
