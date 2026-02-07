@@ -6,6 +6,7 @@ from .models import RankingResponse, RankedCandidate, RankingOutput, CandidateLi
 from ..analysis.models import BookDNAResponse
 from ..analysis.book_analyzer import BookAnalyzer
 from ..shared.ai.gemini_client import create_gemini_model
+from ..shared.utils import build_pillar_descriptions
 
 logger = logging.getLogger("librarian")
 
@@ -88,14 +89,7 @@ class BookRanker:
             logger.info(f"Ranking {len(analyzed_candidates)} analyzed candidates...", extra={'query': True})
 
             # Build pillar descriptions for ranking
-            pillar_descriptions = []
-            for pillar_name in selected_pillars:
-                pillar = getattr(seed_dna, pillar_name)
-                if pillar_name == "setting":
-                    desc = f"Setting: {pillar.full_text}"
-                else:
-                    desc = f"{pillar_name.replace('_', ' ').title()}: {pillar.full_text}"
-                pillar_descriptions.append(desc)
+            pillar_descriptions = build_pillar_descriptions(seed_dna, selected_pillars)
 
             # Create ranking prompt
             pillar_text = '\n'.join(f"- {desc}" for desc in pillar_descriptions)

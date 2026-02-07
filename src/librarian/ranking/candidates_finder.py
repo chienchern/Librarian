@@ -6,6 +6,7 @@ from .models import CandidateList, CandidateBook
 from ..analysis.models import BookDNAResponse
 from .tavily_tool import search_book_candidates
 from ..shared.ai.gemini_client import create_gemini_model
+from ..shared.utils import build_pillar_descriptions
 
 logger = logging.getLogger("librarian")
 
@@ -62,14 +63,7 @@ class CandidatesFinder:
             logger.info(f"Selected dealbreakers: {dealbreakers}", extra={'query': True})
 
             # Build pillar descriptions for LLM filtering
-            pillar_descriptions = []
-            for pillar_name in selected_pillars:
-                pillar = getattr(seed_book_dna, pillar_name)
-                if pillar_name == "setting":
-                    desc = f"Setting: {pillar.full_text}"
-                else:
-                    desc = f"{pillar_name.replace('_', ' ').title()}: {pillar.full_text}"
-                pillar_descriptions.append(desc)
+            pillar_descriptions = build_pillar_descriptions(seed_book_dna, selected_pillars)
 
             logger.info(f"Pillar descriptions for filtering: {pillar_descriptions}", extra={'query': True})
 
