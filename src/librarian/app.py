@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
     books_api = BooksAPI()
     book_analyzer = BookAnalyzer()
     candidates_finder = CandidatesFinder()
-    book_ranker = BookRanker()
+    book_ranker = BookRanker(book_analyzer=book_analyzer)
     recommendations_writer = RecommendationsWriter()
     yield
     await books_api.close()

@@ -24,10 +24,10 @@ class BookRanker:
         prompt_path = Path(__file__).parent / "prompts" / "book_ranker_task.md"
         return prompt_path.read_text(encoding='utf-8').strip()
     
-    def __init__(self):
+    def __init__(self, book_analyzer: BookAnalyzer | None = None):
         self.system_prompt = self._load_system_prompt()
         self.task_prompt_template = self._load_task_prompt()
-        
+
         self.model = create_gemini_model(
             model_id="gemini-2.5-flash",
             temperature=0.3,  # Lower temperature for consistent ranking
@@ -38,9 +38,9 @@ class BookRanker:
             system_prompt=self.system_prompt,
             tools=[]  # No tools needed for ranking
         )
-        
-        # Initialize BookAnalyzer for candidate analysis
-        self.book_analyzer = BookAnalyzer()
+
+        # Use injected BookAnalyzer or create a new one
+        self.book_analyzer = book_analyzer or BookAnalyzer()
     
     async def rank_candidates(
         self,
