@@ -52,6 +52,13 @@ class TestParsedBookQuery:
         assert q.title is None
         assert q.author is None
 
+    def test_to_google_query_escapes_quotes(self):
+        """Test that double quotes in title/author are stripped to avoid breaking query string."""
+        q = ParsedBookQuery(title='Project "Hail" Mary', author='Andy "The Author" Weir')
+        result = q.to_google_query()
+        # Quotes should be removed from title and author
+        assert result == 'intitle:"Project Hail Mary" inauthor:"Andy The Author Weir"'
+
 
 # ---------------------------------------------------------------------------
 # BookMetadata

@@ -10,7 +10,11 @@ class ParsedBookQuery(BaseModel):
         """Convert to Google Books API query string."""
         parts = []
         if self.title:
-            parts.append(f'intitle:"{self.title}"')
+            # Strip/escape double quotes to avoid breaking the query string
+            safe_title = self.title.strip().replace('"', '')
+            parts.append(f'intitle:"{safe_title}"')
         if self.author:
-            parts.append(f'inauthor:"{self.author}"')
+            # Strip/escape double quotes to avoid breaking the query string
+            safe_author = self.author.strip().replace('"', '')
+            parts.append(f'inauthor:"{safe_author}"')
         return " ".join(parts) if parts else ""
