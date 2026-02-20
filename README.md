@@ -36,11 +36,11 @@ The Librarian solves this by being a **Vibe-Based Discovery Engine** that priori
 
 **Book DNA Analysis** — AI breaks down a book into its core elements (prose texture, emotional profile, theme, setting, and more) so you can select the "vibes" that matter most to you.
 
-![Book DNA Analysis](docs/images/book-dna-analysis.png)
+<img src="docs/images/book-dna-analysis.png" alt="Book DNA Analysis" width="400">
 
 **Personalized Recommendations** — Based on your selected vibes, the engine finds and ranks books that match, explaining why each one fits and what makes it a fresh read.
 
-![Book Recommendations](docs/images/book-recommendations.png)
+<img src="docs/images/book-recommendations.png" alt="Book Recommendations" width="400">
 
 ## Tech Stack
 
