@@ -2,6 +2,19 @@
 
 A vibe-based book discovery engine that delights readers by deconstructing books into their "DNA" to help find perfect recommendations.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Target Users](#target-users)
+- [How It Works](#how-it-works)
+- [Screenshots](#screenshots)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Overview
 
 Most book recommendation engines rely on "Collaborative Filtering" (People who bought X also bought Y). This often recommends books that are too similar or fails to capture why a reader actually liked a book (e.g., they liked the "sparse, clinical prose," not the sci-fi setting).
@@ -18,6 +31,16 @@ The Librarian solves this by being a **Vibe-Based Discovery Engine** that priori
 2. **Analyze** - AI extracts the book's "DNA" (setting, narrative engine, prose texture, emotional profile, structural quirks, theme)
 3. **Discover** - Get LLM-powered recommendations based on the specific elements that made you love the original book
 4. **Pivot** - Find books that share your favorite aspects but offer fresh experiences
+
+## Screenshots
+
+**Book DNA Analysis** — AI breaks down a book into its core elements (prose texture, emotional profile, theme, setting, and more) so you can select the "vibes" that matter most to you.
+
+![Book DNA Analysis](docs/images/book-dna-analysis.png)
+
+**Personalized Recommendations** — Based on your selected vibes, the engine finds and ranks books that match, explaining why each one fits and what makes it a fresh read.
+
+![Book Recommendations](docs/images/book-recommendations.png)
 
 ## Tech Stack
 
