@@ -1,4 +1,4 @@
-# The Librarian
+# The Librarian (MVP)
 
 A vibe-based book discovery engine that delights readers by deconstructing books into their "DNA" to help find perfect recommendations.
 
